@@ -1,34 +1,36 @@
-/*
-    Proyecto Final - DNA Sequence
-    Alvaro Santana A01196914
-    Jesus Lozano A01194162
-    Sergio Diosdado A00516971
-*/
 #include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <linux/input.h>
-#include <sys/stat.h>
-#include "daemonize.c"
-#include "monitor5.c"
 #include <sys/inotify.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <fcntl.h> // library for fcntl function
+
 #define MAX_EVENTS 1024                           /* Maximum number of events to process*/
 #define LEN_NAME 16                               /* Assuming that the length of the filename \
                              won't exceed 16 bytes*/
 #define EVENT_SIZE (sizeof(struct inotify_event)) /*size of one event*/
 #define BUF_LEN (MAX_EVENTS * (EVENT_SIZE + LEN_NAME))
 #define PORT 8080
+/*buffer to store the data of events*/
+
+
+int fd, wd;
+
 #define TERMINATION ".seq"
-char *path_to_be_watched = "/home/alvaro/7mosemestre/prograAvanzada/dnaSequence/helloworld";
 
+void sig_handler(int sig)
+{
 
+    /* Step 5. Remove the watch descriptor and close the inotify instance*/
+    inotify_rm_watch(fd, wd);
+    close(fd);
+    exit(0);
+}
 
-int main(int argc, char **argv)
+int monitor()
 {
     /* Creacion de cosas server */
     int server_fd, new_socket, valread;
@@ -37,28 +39,6 @@ int main(int argc, char **argv)
     int addrlen = sizeof(address);
     char buffer[1024] = {0};
     char *hello = "Hello from server";
-
-    /*Creacion de cosas monitor*/
-    
-    signal(SIGINT, sig_handler);
-
-    //Initialize inotify
-    fd = inotify_init();
-
-    if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0) // error checking for fcntl
-        exit(2);
-
-    //Add watch
-    wd = inotify_add_watch(fd, path_to_be_watched, IN_CREATE);
-
-    if (wd == -1)
-    {
-        printf("Could not watch : %s\n", path_to_be_watched);
-    }
-    else
-    {
-        printf("Watching : %s\n", path_to_be_watched);
-    }
 
     // Creating socket file descriptor
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
@@ -96,10 +76,34 @@ int main(int argc, char **argv)
 
     valread = read(new_socket, buffer, 1024);
     printf("%s\n", buffer);
+
+    /*Creacion de cosas monitor*/
+    char *path_to_be_watched;
+    signal(SIGINT, sig_handler);
+
+    path_to_be_watched = "/home/alvaro/7mosemestre/prograAvanzada/dnaSequence/helloworld";
+
+    //Initialize inotify
+    fd = inotify_init();
+
+    if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0) // error checking for fcntl
+        exit(2);
+
+    //Add watch
+    wd = inotify_add_watch(fd, path_to_be_watched, IN_CREATE);
+
+    if (wd == -1)
+    {
+        printf("Could not watch : %s\n", path_to_be_watched);
+    }
+    else
+    {
+        printf("Watching : %s\n", path_to_be_watched);
+    }
     
-    daemonize();
     while (1)
     {
+
         int i = 0, length;
         char buffer[BUF_LEN];
 
@@ -136,6 +140,5 @@ int main(int argc, char **argv)
             }
             i += EVENT_SIZE + event->len;
         }
-        
     }
 }
