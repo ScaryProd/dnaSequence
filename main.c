@@ -10,12 +10,13 @@
 #include <linux/input.h>
 #include <sys/stat.h>
 #include "daemonize.c"
+#include "monitor5.c"
 
 int main(int argc, char **argv)
 {
     daemonize();
     while (1)
     {
-        
+        monitor();
     }
 }
