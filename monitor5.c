@@ -30,7 +30,7 @@ void sig_handler(int sig)
     exit(0);
 }
 
-int main()
+int monitor()
 {
     /* Creacion de cosas server */
     int server_fd, new_socket, valread;
