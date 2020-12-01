@@ -4,10 +4,11 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string.h>
+#include "checker.c"
 #define PORT 8080
 
 int main(int argc, char const *argv[])
-{
+{	
 	int sock = 0, valread;
 	struct sockaddr_in serv_addr;
 	char *hello = "Hello from client";
@@ -35,10 +36,16 @@ int main(int argc, char const *argv[])
 	}
 	send(sock, hello, strlen(hello), 0);
 	printf("Hello message sent\n");
+	char string1[1024];
+	strcpy(string1, "helloworld/");
 	while (1)
 	{
+		strcpy(string1, "helloworld/");
 		valread = read(sock, buffer, 1024);
-		printf("%s\n", buffer);
+		
+		strcat(string1, buffer);
+		//checker(string1);
+		printf("%s\n",string1);
 	}
 	return 0;
 }
