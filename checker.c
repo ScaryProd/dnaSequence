@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <ctype.h>
+#define SIZE 12000000
+#define SIZE_L 20000
 
 struct data
 {
@@ -11,11 +13,11 @@ struct data
     int size;
 };
 
-char *sample[50];
-struct data sampleindex[50];
+char *sample[502];
+struct data sampleindex[502];
 double charsmaped = 0;
-//char DNA[369] = "ACAAGATGCCATTGTCCCCCGGCCTCCTGCTGCTGCTGCTCTCCGGGGCCACGGCCACCGCTGCCCTGCCCCTGGAGGGTGGCCCCACCGGCCGAGACAGCGAGCATATGCAGGAAGCGGCAGGAATAAGGAAAAGCAGCCTCCTGACTTTCCTCGCTTGGTGGTTTGAGTGGACCTCCCAGGCCAGTGCCGGGCCCCTCATAGGAGAGGAAGCTCGGGAGGTGGCCAGGCGGCAGGAAGGCGCACCCCCCCAGCAATCCGCGCGCCGGGACAGAATGCCCTGCAGGAACTTCTTCTGGAAGACCTTCTCCTCCTGCAAATAAAACCTCACCCATGAATGCTCACGCAAGTTTAATTACAGACCTGAA";
-char DNA[370];
+char *DNA;
+
 
 int isSubstring(char *stringGrande, char *substring)
 {
@@ -45,12 +47,8 @@ void *myFun(void *x)
     int tid;
     tid = *((int *)x);
     printf("Entering thread %d\n", tid);
-    //printf("\n%s", sample[tid]);
+
     int index = isSubstring(DNA, sample[tid]);
-    //printf("\n%d", index);
-    // if(index != -1){
-    //     printf(" - %d", index + strlen(sample[tid]));
-    // }
     sampleindex[tid].index = index;
     sampleindex[tid].size = strlen(sample[tid]);
     return NULL;
@@ -62,21 +60,23 @@ int compare(const void *a, const void *b)
     return da->index < db->index ? -1 : da->index > db->index;
 }
 
-//int checker(char fileToOpen[1024])
-int main()
+int checker(char fileToOpen[1024])
+//int main()
 {
-    char *fileToOpen = "texto.seq";
+    //char *fileToOpen = "s_cerevisia copy.seq";
     FILE *ref;
-    ref = fopen("referencia.txt", "r");
+    ref = fopen("S._cerevisiae_processed.txt", "r");
     if (ref)
     {
-        fgets(DNA, sizeof(DNA), ref);
+        DNA = (char *) realloc(DNA, SIZE);
+        
+        fgets(DNA, sizeof(char)*SIZE, ref);
     }
     printf("%s\n", fileToOpen);
     int mapeado = 0;
     int nomapeado = 0;
     int i = 0;
-    char linea[369];
+    char linea[SIZE_L];
     int dnasize = strlen(DNA);
 
     FILE *file;
@@ -88,7 +88,7 @@ int main()
         long fileSize = ftell(file);
         fseek(file, 0, SEEK_SET); // needed for next read from beginning of file
                                   //Agregar todas las lineas al arreglo sample
-        printf("%ld\n", fileSize);
+        //printf("%ld\n", fileSize);
     }
 
     while (fgets(linea, sizeof(linea), file) != NULL)
@@ -96,7 +96,7 @@ int main()
 
         linea[strlen(linea) - 1] = '\0';
         linea[strlen(linea) - 1] = '\0';
-        printf("%s\n", linea);
+        //printf("%s\n", linea);
         sample[i] = strdup(linea);
         i++;
     }
@@ -161,7 +161,7 @@ int main()
 
     charsmaped = charsmaped / dnasize * 100;
     printf("\n");
-    printf("\nEl archivo cubre el %d%% del genoma de referencia", (int)floor(charsmaped));
+    printf("\nEl archivo cubre el %f del genoma de referencia", charsmaped);
     printf("\n%d secuencias mapeadas", mapeado);
     printf("\n%d secuencias no mapeadas\n", nomapeado);
 

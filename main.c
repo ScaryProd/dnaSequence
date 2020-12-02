@@ -124,7 +124,7 @@ int main(int argc, char **argv)
                     {
                         if(strstr(event->name, TERMINATION) != NULL) {
                             printf("The SEQ file %s was created.\n", event->name);
-                            sleep(3);
+                            sleep(5);
                             send(new_socket, event->name, strlen(event->name), 0);
                             
                         }
