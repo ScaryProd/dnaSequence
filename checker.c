@@ -4,8 +4,14 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <ctype.h>
+#include <string.h>
+#include <time.h>
+
 #define SIZE 12000000
 #define SIZE_L 20000
+#define LINES 100
+#define MAX_THREADS 5
+#define TOTAL_LINES 500
 
 struct data
 {
@@ -13,46 +19,10 @@ struct data
     int size;
 };
 
-char *sample[502];
-struct data sampleindex[502];
+char *sample[TOTAL_LINES];
+struct data sampleindex[TOTAL_LINES];
 double charsmaped = 0;
 char *DNA;
-
-
-int isSubstring(char *stringGrande, char *substring)
-{
-    int i = 0;
-    int j = 0;
-    for (i = strlen(stringGrande) - strlen(substring); i >= 0; i--)
-    {
-        int encontro = 1;
-        for (j = 0; j < strlen(substring); j++)
-        {
-            if (stringGrande[i + j] != substring[j])
-            {
-                encontro = 0;
-                break;
-            }
-        }
-        if (encontro == 1)
-        {
-            return i;
-        }
-    }
-    return -1;
-}
-
-void *myFun(void *x)
-{
-    int tid;
-    tid = *((int *)x);
-    printf("Entering thread %d\n", tid);
-
-    int index = isSubstring(DNA, sample[tid]);
-    sampleindex[tid].index = index;
-    sampleindex[tid].size = strlen(sample[tid]);
-    return NULL;
-}
 
 int compare(const void *a, const void *b)
 {
@@ -60,19 +30,40 @@ int compare(const void *a, const void *b)
     return da->index < db->index ? -1 : da->index > db->index;
 }
 
-int checker(char fileToOpen[1024])
-//int main()
+void *myFun(void *x)
 {
-    //char *fileToOpen = "s_cerevisia copy.seq";
+    int tid;
+    tid = *((int *)x);
+    printf("Entering thread %d\n", tid);
+    for(int idx = tid*100; idx < tid*100+LINES; idx++){
+        char *exists = strstr(DNA, sample[idx]);
+        if(exists != NULL) {
+            int index = (int)(exists - DNA);
+            int size = strlen(sample[idx]);
+            sampleindex[idx].index = index;
+            sampleindex[idx].size = size;
+        } else {
+            sampleindex[idx].index = -1;
+            sampleindex[idx].size = 0;
+        }
+    }
+    return NULL;
+}
+
+// int checker(char fileToOpen[1024])
+int main()
+{
+    char *fileToOpen = "s_cerevisia.seq";
     FILE *ref;
     ref = fopen("S._cerevisiae_processed.txt", "r");
+    
     if (ref)
     {
         DNA = (char *) realloc(DNA, SIZE);
-        
         fgets(DNA, sizeof(char)*SIZE, ref);
     }
     printf("%s\n", fileToOpen);
+    
     int mapeado = 0;
     int nomapeado = 0;
     int i = 0;
@@ -81,48 +72,33 @@ int checker(char fileToOpen[1024])
 
     FILE *file;
     file = fopen(fileToOpen, "r");
-    if (file)
-    {
-        printf("Estamos dentro\n");
-        fseek(file, 0, SEEK_END);
-        long fileSize = ftell(file);
-        fseek(file, 0, SEEK_SET); // needed for next read from beginning of file
-                                  //Agregar todas las lineas al arreglo sample
-        //printf("%ld\n", fileSize);
-    }
-
     while (fgets(linea, sizeof(linea), file) != NULL)
     {
-
         linea[strlen(linea) - 1] = '\0';
         linea[strlen(linea) - 1] = '\0';
-        //printf("%s\n", linea);
         sample[i] = strdup(linea);
         i++;
     }
     fclose(file);
-    pthread_t threads[i + 1];
-    int thread_args[i + 1];
+    
+    clock_t begin = clock();
+    pthread_t threads[MAX_THREADS];
+    int thread_args[MAX_THREADS];
     int rc;
-
-    for (int j = 0; j < i; j++)
+    for (int j = 0; j < MAX_THREADS; j++)
     {
         thread_args[j] = j;
         printf("spawning thread %d\n", j);
         rc = pthread_create(&threads[j], NULL, myFun, (void *)&thread_args[j]);
     }
-    for (int j = 0; j < i; j++)
+    for (int j = 0; j < MAX_THREADS; j++)
     {
         rc = pthread_join(threads[j], NULL);
     }
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-    /*
-    for (int j = 0; j < i; j++)
-    {
-        printf("%d, %d \n", sampleindex[j].index, sampleindex[j].size);
-    }
-    */
-    for (int j = 0; j < i; j++)
+    for (int j = 0; j < TOTAL_LINES; j++)
     {
         if (sampleindex[j].index != -1)
         {
@@ -136,8 +112,8 @@ int checker(char fileToOpen[1024])
         }
     }
 
-    qsort(sampleindex, i, sizeof(*sampleindex), compare);
-    for (int j = 0; j < i; j++)
+    qsort(sampleindex, TOTAL_LINES, sizeof(*sampleindex), compare);
+    for (int j = 0; j < TOTAL_LINES; j++)
     {
         if (sampleindex[j].index == -1)
         {
@@ -158,12 +134,13 @@ int checker(char fileToOpen[1024])
             charsmaped += sampleindex[j].size;
         }
     }
-
     charsmaped = charsmaped / dnasize * 100;
     printf("\n");
     printf("\nEl archivo cubre el %f del genoma de referencia", charsmaped);
     printf("\n%d secuencias mapeadas", mapeado);
     printf("\n%d secuencias no mapeadas\n", nomapeado);
+    printf("Exec time: %f\n", time_spent);
+    free(DNA);
 
     return 0;
 }
