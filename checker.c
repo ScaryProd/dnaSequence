@@ -52,10 +52,10 @@ void *myFun(void *x)
     return NULL;
 }
 
-// int checker(char fileToOpen[1024])
-int main()
+int checker(char fileToOpen[1024])
+// int main()
 {
-    char *fileToOpen = "s_cerevisia copy.seq";
+    // char *fileToOpen = "s_cerevisia.seq";
     FILE *ref;
     ref = fopen("S._cerevisiae_processed.txt", "r");
     
@@ -152,7 +152,7 @@ int main()
     printf("\n%d secuencias mapeadas", mapeado);
     printf("\n%d secuencias no mapeadas\n", nomapeado);
     printf("Exec time: %f\n", time_spent);
-    free(DNA);
+    // free(DNA);
 
     return 0;
 }
