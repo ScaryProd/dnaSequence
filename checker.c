@@ -9,9 +9,9 @@
 
 #define SIZE 12000000
 #define SIZE_L 20000
-#define LINES 100
+
+#define MAX_LINES_THREAD 100
 #define MAX_THREADS 5
-#define TOTAL_LINES 500
 
 struct data
 {
@@ -19,10 +19,13 @@ struct data
     int size;
 };
 
-char *sample[TOTAL_LINES];
-struct data sampleindex[TOTAL_LINES];
+char *sample[500];
+struct data sampleindex[500];
 double charsmaped = 0;
 char *DNA;
+int num_threads = MAX_THREADS;
+int lines_per_thread = MAX_LINES_THREAD;
+int remaining_lines = 0;
 
 int compare(const void *a, const void *b)
 {
@@ -35,7 +38,11 @@ void *myFun(void *x)
     int tid;
     tid = *((int *)x);
     printf("Entering thread %d\n", tid);
-    for(int idx = tid*100; idx < tid*100+LINES; idx++){
+    int local_lines_per_thread = lines_per_thread;
+    if(remaining_lines > 0 && tid == num_threads - 1) {
+        local_lines_per_thread += remaining_lines;
+    }
+    for(int idx = tid*lines_per_thread; idx < tid*lines_per_thread+local_lines_per_thread; idx++){
         char *exists = strstr(DNA, sample[idx]);
         if(exists != NULL) {
             int index = (int)(exists - DNA);
@@ -53,7 +60,7 @@ void *myFun(void *x)
 // int checker(char fileToOpen[1024])
 int main()
 {
-    char *fileToOpen = "s_cerevisia.seq";
+    // char *fileToOpen = "s_cerevisia copy.seq";
     FILE *ref;
     ref = fopen("S._cerevisiae_processed.txt", "r");
     
@@ -82,23 +89,36 @@ int main()
     fclose(file);
     
     clock_t begin = clock();
-    pthread_t threads[MAX_THREADS];
-    int thread_args[MAX_THREADS];
+    int total_lines = i;
+    if(i < 100) {
+        num_threads = 1;
+        lines_per_thread = i;
+    } else if (i / 100 > 0 && i / 100 < MAX_THREADS){
+        num_threads = i / 100;
+        lines_per_thread = i / num_threads;
+    } else {
+        lines_per_thread = i / num_threads;
+    }
+    remaining_lines = lines_per_thread % num_threads;
+
+
+    pthread_t threads[num_threads];
+    int thread_args[num_threads];
     int rc;
-    for (int j = 0; j < MAX_THREADS; j++)
+    for (int j = 0; j < num_threads; j++)
     {
         thread_args[j] = j;
         printf("spawning thread %d\n", j);
         rc = pthread_create(&threads[j], NULL, myFun, (void *)&thread_args[j]);
     }
-    for (int j = 0; j < MAX_THREADS; j++)
+    for (int j = 0; j < num_threads; j++)
     {
         rc = pthread_join(threads[j], NULL);
     }
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-    for (int j = 0; j < TOTAL_LINES; j++)
+    for (int j = 0; j < total_lines; j++)
     {
         if (sampleindex[j].index != -1)
         {
@@ -112,8 +132,8 @@ int main()
         }
     }
 
-    qsort(sampleindex, TOTAL_LINES, sizeof(*sampleindex), compare);
-    for (int j = 0; j < TOTAL_LINES; j++)
+    qsort(sampleindex, total_lines, sizeof(*sampleindex), compare);
+    for (int j = 0; j < total_lines; j++)
     {
         if (sampleindex[j].index == -1)
         {
