@@ -14,7 +14,8 @@ struct data
 char *sample[50];
 struct data sampleindex[50];
 double charsmaped = 0;
-char DNA[369] = "ACAAGATGCCATTGTCCCCCGGCCTCCTGCTGCTGCTGCTCTCCGGGGCCACGGCCACCGCTGCCCTGCCCCTGGAGGGTGGCCCCACCGGCCGAGACAGCGAGCATATGCAGGAAGCGGCAGGAATAAGGAAAAGCAGCCTCCTGACTTTCCTCGCTTGGTGGTTTGAGTGGACCTCCCAGGCCAGTGCCGGGCCCCTCATAGGAGAGGAAGCTCGGGAGGTGGCCAGGCGGCAGGAAGGCGCACCCCCCCAGCAATCCGCGCGCCGGGACAGAATGCCCTGCAGGAACTTCTTCTGGAAGACCTTCTCCTCCTGCAAATAAAACCTCACCCATGAATGCTCACGCAAGTTTAATTACAGACCTGAA";
+//char DNA[369] = "ACAAGATGCCATTGTCCCCCGGCCTCCTGCTGCTGCTGCTCTCCGGGGCCACGGCCACCGCTGCCCTGCCCCTGGAGGGTGGCCCCACCGGCCGAGACAGCGAGCATATGCAGGAAGCGGCAGGAATAAGGAAAAGCAGCCTCCTGACTTTCCTCGCTTGGTGGTTTGAGTGGACCTCCCAGGCCAGTGCCGGGCCCCTCATAGGAGAGGAAGCTCGGGAGGTGGCCAGGCGGCAGGAAGGCGCACCCCCCCAGCAATCCGCGCGCCGGGACAGAATGCCCTGCAGGAACTTCTTCTGGAAGACCTTCTCCTCCTGCAAATAAAACCTCACCCATGAATGCTCACGCAAGTTTAATTACAGACCTGAA";
+char DNA[370];
 
 int isSubstring(char *stringGrande, char *substring)
 {
@@ -61,33 +62,41 @@ int compare(const void *a, const void *b)
     return da->index < db->index ? -1 : da->index > db->index;
 }
 
-int checker(char fileToOpen[1024])
-//int main()
+//int checker(char fileToOpen[1024])
+int main()
 {
-    //char fileToOpen[] = "helloworld/texto.seq";
-    printf("%s\n",fileToOpen);
+    char *fileToOpen = "texto.seq";
+    FILE *ref;
+    ref = fopen("referencia.txt", "r");
+    if (ref)
+    {
+        fgets(DNA, sizeof(DNA), ref);
+    }
+    printf("%s\n", fileToOpen);
     int mapeado = 0;
     int nomapeado = 0;
     int i = 0;
     char linea[369];
     int dnasize = strlen(DNA);
+
     FILE *file;
     file = fopen(fileToOpen, "r");
-    if(file){
+    if (file)
+    {
         printf("Estamos dentro\n");
-        fseek(file, 0 , SEEK_END);
+        fseek(file, 0, SEEK_END);
         long fileSize = ftell(file);
-        fseek(file, 0 , SEEK_SET);// needed for next read from beginning of file
-    //Agregar todas las lineas al arreglo sample
+        fseek(file, 0, SEEK_SET); // needed for next read from beginning of file
+                                  //Agregar todas las lineas al arreglo sample
         printf("%ld\n", fileSize);
     }
-    
+
     while (fgets(linea, sizeof(linea), file) != NULL)
     {
-        
+
         linea[strlen(linea) - 1] = '\0';
         linea[strlen(linea) - 1] = '\0';
-        printf("%s\n",linea);
+        printf("%s\n", linea);
         sample[i] = strdup(linea);
         i++;
     }
