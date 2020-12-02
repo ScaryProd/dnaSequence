@@ -44,8 +44,8 @@ int main(int argc, char const *argv[])
 		valread = read(sock, buffer, 1024);
 		
 		strcat(string1, buffer);
-		//checker(string1);
-		printf("%s\n",string1);
+		checker(string1);
+		//printf("%s\n",string1);
 	}
 	return 0;
 }

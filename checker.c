@@ -43,7 +43,7 @@ void *myFun(void *x)
 {
     int tid;
     tid = *((int *)x);
-    printf("Entering thread %d", tid);
+    printf("Entering thread %d\n", tid);
     //printf("\n%s", sample[tid]);
     int index = isSubstring(DNA, sample[tid]);
     //printf("\n%d", index);
@@ -61,10 +61,11 @@ int compare(const void *a, const void *b)
     return da->index < db->index ? -1 : da->index > db->index;
 }
 
-//int checker(char fileToOpen[1024])
-int main()
+int checker(char fileToOpen[1024])
+//int main()
 {
-    char fileToOpen[] = "helloworld/texto.seq";
+    //char fileToOpen[] = "helloworld/texto.seq";
+    printf("%s\n",fileToOpen);
     int mapeado = 0;
     int nomapeado = 0;
     int i = 0;
@@ -72,10 +73,21 @@ int main()
     int dnasize = strlen(DNA);
     FILE *file;
     file = fopen(fileToOpen, "r");
+    if(file){
+        printf("Estamos dentro\n");
+        fseek(file, 0 , SEEK_END);
+        long fileSize = ftell(file);
+        fseek(file, 0 , SEEK_SET);// needed for next read from beginning of file
     //Agregar todas las lineas al arreglo sample
+        printf("%ld\n", fileSize);
+    }
+    
     while (fgets(linea, sizeof(linea), file) != NULL)
     {
+        
         linea[strlen(linea) - 1] = '\0';
+        linea[strlen(linea) - 1] = '\0';
+        printf("%s\n",linea);
         sample[i] = strdup(linea);
         i++;
     }
@@ -95,11 +107,12 @@ int main()
         rc = pthread_join(threads[j], NULL);
     }
 
+    /*
     for (int j = 0; j < i; j++)
     {
         printf("%d, %d \n", sampleindex[j].index, sampleindex[j].size);
     }
-
+    */
     for (int j = 0; j < i; j++)
     {
         if (sampleindex[j].index != -1)
@@ -141,7 +154,7 @@ int main()
     printf("\n");
     printf("\nEl archivo cubre el %d%% del genoma de referencia", (int)floor(charsmaped));
     printf("\n%d secuencias mapeadas", mapeado);
-    printf("\n%d secuencias no mapeadas", nomapeado);
+    printf("\n%d secuencias no mapeadas\n", nomapeado);
 
     return 0;
 }
